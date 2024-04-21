@@ -1,0 +1,13 @@
+logs
+_.log
+.cache
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+node_modules/
+*.tsbuildinfo
+*.tgz
+
+dist
+
+.DS_Store
+._*
