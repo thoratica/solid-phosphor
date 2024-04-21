@@ -3,7 +3,7 @@ import { exec } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as Core from '../core/src';
+import * as Core from '../core/src/index.ts';
 
 const { IconStyle } = (Core as unknown as { default: typeof Core }).default;
 
@@ -11,29 +11,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const ASSETS_PATH = path.join(__dirname, '../core/assets');
-export const OUTPUT_PATH = path.join(__dirname, '../src/icons');
-export const WEIGHTS_PATH = path.join(__dirname, '../src/weights');
+export const DIST_PATH = path.join(__dirname, '../dist');
 export const WEIGHTS = Object.values(IconStyle);
 
 export type AssetMap = Record<string, Record<Core.IconStyle, string>>;
-
-const transformJSX = (jsx: string) =>
-  jsx
-    .replace(/^.*<\?xml.*?\>/g, '')
-    .replace(/<svg.*?>/g, '')
-    .replace(/<\/svg>/g, '')
-    .replace(
-      /<rect width="25[\d,\.]+" height="25[\d,\.]+" fill="none".*?\/>/g,
-      '',
-    )
-    .replace(/<title.*?/, '')
-    .replace(/"#0+"/g, '{color}')
-    .replace(/currentColor/g, '{color}')
-    .replace(/fill\-rule/g, 'fillRule')
-    .replace(/stroke-linecap/g, 'strokeLinecap')
-    .replace(/stroke-linejoin/g, 'strokeLinejoin')
-    .replace(/stroke-width/g, 'strokeWidth')
-    .replace(/stroke-miterlimit/g, 'strokeMiterlimit');
 
 function readIcons(): AssetMap {
   const assetsDir = fs.readdirSync(ASSETS_PATH, 'utf-8');
@@ -57,7 +38,7 @@ function readIcons(): AssetMap {
 
       const assetPath = path.join(ASSETS_PATH, weight, filename);
       const asset = fs.readFileSync(assetPath, 'utf-8');
-      icons[name][weight as Core.IconStyle] = transformJSX(asset);
+      icons[name][weight as Core.IconStyle] = asset;
     }
   }
 
@@ -93,104 +74,90 @@ function verifyIcons(icons: AssetMap) {
   return fails === 0;
 }
 
+function pascalize(str: string) {
+  return str
+    .split('-')
+    .map((str) => str.replace(/^\w/, (c) => c.toUpperCase()))
+    .join('');
+}
+
 async function generateComponents(icons: AssetMap) {
   let passes = 0;
   let fails = 0;
 
-  if (fs.existsSync(OUTPUT_PATH)) {
-    fs.rmSync(OUTPUT_PATH, { recursive: true });
-  }
-  fs.mkdirSync(OUTPUT_PATH);
-
-  if (fs.existsSync(WEIGHTS_PATH)) {
-    fs.rmSync(WEIGHTS_PATH, { recursive: true });
-  }
-  fs.mkdirSync(WEIGHTS_PATH);
+  if (!fs.existsSync(DIST_PATH)) fs.mkdirSync(DIST_PATH);
 
   await Promise.all(
     WEIGHTS.map(
       (w) =>
         new Promise<void>((res) =>
-          fs.mkdir(path.join(OUTPUT_PATH, w), () => res()),
+          fs.mkdir(path.join(DIST_PATH, w), () => res()),
         ),
     ),
   );
+
+  let types = "import type { PhosphorIcon } from '../lib/index.d.ts';\n\n";
+  const indexes: Record<Core.IconStyle, [string, string][]> = {
+    bold: [],
+    duotone: [],
+    fill: [],
+    light: [],
+    regular: [],
+    thin: [],
+  };
 
   for (const key in icons) {
     const icon = icons[key];
     const name = pascalize(key);
 
+    types += `export declare const ${name}Icon: IconTypes;\n`;
     for (const [weight, svg] of Object.entries(icon)) {
-      const iconString = `/* GENERATED FILE */
-import { BaseIcon, type IconProps } from '../../icon';
-
-export const ${name}Icon = (props: IconProps) => {
-  return <BaseIcon {...props} path={<>${svg}</>} />;
+      indexes[weight as Core.IconStyle].push([
+        name,
+        `function ${name}Icon(props) {
+  return IconTemplate(
+    '${svg}',
+    props,
+  );
 };
-`;
-
-      try {
-        fs.writeFileSync(
-          path.join(OUTPUT_PATH, weight, `${key}.tsx`),
-          iconString,
-        );
-        console.log(`${chalk.inverse.green(' DONE ')} ${key}-${weight}`);
-        passes += 1;
-      } catch (err) {
-        console.error(
-          `${chalk.inverse.red(' FAIL ')} ${key}-${weight} could not be saved`,
-        );
-        console.group();
-        console.error(err);
-        console.groupEnd();
-        fails += 1;
-      }
+`,
+      ]);
     }
   }
+  for (const [weight, items] of Object.entries(indexes)) {
+    try {
+      fs.writeFileSync(
+        path.join(DIST_PATH, weight, 'index.js'),
+        `import { IconTemplate } from '../lib/index.js';\n\n${items
+          .map(([_, block]) => `export ${block}`)
+          .join('\n')}`,
+      );
+      fs.writeFileSync(
+        path.join(DIST_PATH, weight, 'index.cjs'),
+        `const { IconTemplate } = require('../lib/index.cjs');\n\n${items
+          .map(([name, block]) => `module.exports.${name} = ${block}`)
+          .join('\n')}`,
+      );
+      fs.writeFileSync(path.join(DIST_PATH, weight, 'index.d.ts'), types);
+      console.log(`${chalk.inverse.green(' DONE ')} ${weight}`);
+      passes += 1;
+    } catch (err) {
+      console.error(
+        `${chalk.inverse.red(' FAIL ')} ${weight} could not be saved`,
+      );
+      console.group();
+      console.error(err);
+      console.groupEnd();
+      fails += 1;
+    }
+  }
+
   if (passes > 0)
     console.log(
       chalk.green(`${passes} component${passes > 1 ? 's' : ''} generated`),
     );
   if (fails > 0)
     console.log(chalk.red(`${fails} component${fails > 1 ? 's' : ''} failed`));
-}
-
-function generateExports(icons: AssetMap) {
-  const indexes: Record<Core.IconStyle, string> = {
-    bold: '',
-    duotone: '',
-    fill: '',
-    light: '',
-    regular: '',
-    thin: '',
-  };
-  for (const key in icons) {
-    const name = pascalize(key);
-    for (const weight in icons[key]) {
-      indexes[weight as Core.IconStyle] +=
-        `export * from '../icons/${weight}/${key}';\n`;
-    }
-  }
-  try {
-    for (const [weight, index] of Object.entries(indexes))
-      fs.writeFileSync(
-        path.join(__dirname, `../src/weights/${weight}.ts`),
-        index,
-      );
-    console.log(chalk.green('Export success'));
-  } catch (err) {
-    console.error(chalk.red('Export failed'));
-    console.group();
-    console.error(err);
-    console.groupEnd();
-  }
-}
-
-function pascalize(str: string) {
-  return str
-    .split('-')
-    .map((str) => str.replace(/^\w/, (c) => c.toUpperCase()))
-    .join('');
 }
 
 exec(
@@ -216,6 +183,5 @@ exec(
     }
 
     generateComponents(icons);
-    generateExports(icons);
   },
 );

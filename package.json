@@ -1,26 +1,7 @@
 {
   "name": "solid-phosphor",
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "solid": "./dist/source/index.js",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "browser": {
-        "import": "./dist/esm/index.js",
-        "require": "./dist/cjs/index.js"
-      },
-      "node": "./dist/cjs/index.js"
-    }
-  },
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/types/index.d.ts",
-  "scripts": {
-    "assemble": "tsx scripts/assemble.ts",
-    "build": "rollup -c"
-  },
+  "main": "./dist/lib/index.cjs",
+  "module": "./dist/lib/index.js",
   "devDependencies": {
     "@biomejs/biome": "1.7.0",
     "@types/bun": "latest",
@@ -33,5 +14,100 @@
     "solid-js": "^1.8.16",
     "typescript": "^5.0.0"
   },
-  "trustedDependencies": ["@biomejs/biome", "esbuild"]
+  "exports": {
+    ".": {
+      "types": "./dist/lib/index.d.ts",
+      "solid": "./dist/lib/index.jsx",
+      "import": "./dist/lib/index.js",
+      "require": "./dist/lib/index.cjs",
+      "browser": {
+        "import": "./dist/lib/index.js",
+        "require": "./dist/lib/index.cjs"
+      },
+      "node": "./dist/lib/index.cjs"
+    },
+    "./bold": {
+      "types": "./dist/bold/index.d.ts",
+      "solid": "./dist/bold/index.js",
+      "import": "./dist/bold/index.js",
+      "require": "./dist/bold/index.cjs",
+      "browser": {
+        "import": "./dist/bold/index.js",
+        "require": "./dist/bold/index.cjs"
+      },
+      "node": "./dist/bold/index.cjs"
+    },
+    "./duotone": {
+      "types": "./dist/duotone/index.d.ts",
+      "solid": "./dist/duotone/index.js",
+      "import": "./dist/duotone/index.js",
+      "require": "./dist/duotone/index.cjs",
+      "browser": {
+        "import": "./dist/duotone/index.js",
+        "require": "./dist/duotone/index.cjs"
+      },
+      "node": "./dist/duotone/index.cjs"
+    },
+    "./fill": {
+      "types": "./dist/fill/index.d.ts",
+      "solid": "./dist/fill/index.js",
+      "import": "./dist/fill/index.js",
+      "require": "./dist/fill/index.cjs",
+      "browser": {
+        "import": "./dist/fill/index.js",
+        "require": "./dist/fill/index.cjs"
+      },
+      "node": "./dist/fill/index.cjs"
+    },
+    "./light": {
+      "types": "./dist/light/index.d.ts",
+      "solid": "./dist/light/index.js",
+      "import": "./dist/light/index.js",
+      "require": "./dist/light/index.cjs",
+      "browser": {
+        "import": "./dist/light/index.js",
+        "require": "./dist/light/index.cjs"
+      },
+      "node": "./dist/light/index.cjs"
+    },
+    "./regular": {
+      "types": "./dist/regular/index.d.ts",
+      "solid": "./dist/regular/index.js",
+      "import": "./dist/regular/index.js",
+      "require": "./dist/regular/index.cjs",
+      "browser": {
+        "import": "./dist/regular/index.js",
+        "require": "./dist/regular/index.cjs"
+      },
+      "node": "./dist/regular/index.cjs"
+    },
+    "./thin": {
+      "types": "./dist/thin/index.d.ts",
+      "solid": "./dist/thin/index.js",
+      "import": "./dist/thin/index.js",
+      "require": "./dist/thin/index.cjs",
+      "browser": {
+        "import": "./dist/thin/index.js",
+        "require": "./dist/thin/index.cjs"
+      },
+      "node": "./dist/thin/index.cjs"
+    }
+  },
+  "scripts": {
+    "assemble": "tsx scripts/assemble.ts",
+    "build": "rollup -c"
+  },
+  "trustedDependencies": ["@biomejs/biome", "esbuild"],
+  "type": "module",
+  "types": "./dist/lib/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "bold": ["./dist/bold/index.d.ts"],
+      "duotone": ["./dist/duotone/index.d.ts"],
+      "fill": ["./dist/fill/index.d.ts"],
+      "light": ["./dist/light/index.d.ts"],
+      "regular": ["./dist/regular/index.d.ts"],
+      "thin": ["./dist/thin/index.d.ts"]
+    }
+  }
 }
