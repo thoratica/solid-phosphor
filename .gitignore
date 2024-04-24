@@ -7,7 +7,5 @@ node_modules/
 *.tsbuildinfo
 *.tgz
 
-dist
-
 .DS_Store
 ._*
