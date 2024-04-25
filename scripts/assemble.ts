@@ -110,7 +110,7 @@ async function generateComponents(icons: AssetMap) {
     const icon = icons[key];
     const name = pascalize(key);
 
-    types += `export declare const ${name}Icon: IconTypes;\n`;
+    types += `export declare const ${name}Icon: PhosphorIcon;\n`;
     for (const [weight, svg] of Object.entries(icon)) {
       indexes[weight as Core.IconStyle].push([
         name,
