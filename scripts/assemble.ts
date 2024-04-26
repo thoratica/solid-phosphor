@@ -16,6 +16,12 @@ export const WEIGHTS = Object.values(IconStyle);
 
 export type AssetMap = Record<string, Record<Core.IconStyle, string>>;
 
+const transformJSX = (contents: string) =>
+  contents
+    .replace(/^.*<\?xml.*?\>/g, '')
+    .replace(/<svg.*?>/g, '')
+    .replace(/<\/svg>/g, '');
+
 function readIcons(): AssetMap {
   const assetsDir = fs.readdirSync(ASSETS_PATH, 'utf-8');
   const icons: AssetMap = {};
@@ -38,7 +44,7 @@ function readIcons(): AssetMap {
 
       const assetPath = path.join(ASSETS_PATH, weight, filename);
       const asset = fs.readFileSync(assetPath, 'utf-8');
-      icons[name][weight as Core.IconStyle] = asset;
+      icons[name][weight as Core.IconStyle] = transformJSX(asset);
     }
   }
 
